@@ -1,0 +1,55 @@
+each graphics object wlll be a state machine
+    each state will go out in the 4 cardinal directions to their neighbors
+    might use 8 points
+the entire surface areay will have states
+    we will tell them apart by color
+
+
+showing overlapping shapes
+each pixel will be a state
+    its context will have a parent pointing to the state that is part of the shape
+each state connected to the pixel will have a context representing where on the pixel array it is
+
+ith pixel
+    0
+        parent(state from a shape)
+    1
+
+when shifting the shape, we will pull it from the ith pixel array at it's contextual ith position
+
+object movement
+
+for the total distance of each drag, each object may only be movied 1 pixel in an direction at a time
+(x + 1, y) or (x, y + 1)
+
+if a pixel state's coordinates +- 1 has 2 or more parents then we have touched another object
+
+
+updating speed = n pixels/1 timestep
+
+the smallest speed is like the planck time but for this computer
+
+the update speeds for 5 objects
+[0, 1, 20, 6, 8]
+
+all items update at the same rate
+for 1 timestep
+    we want to make 20 updates
+    20 updates
+        + 0
+        + 1
+        + 20
+        + 6
+        + 8
+    for our 20 updates
+        update a[i]
+    if a[i] == 20
+        update a[i]
+    update object => O(n)
+        each time it's just + 1
+
+    detect collision => O(1)
+
+regular
+update object -> O(1)
+detect collision -> O(n)
