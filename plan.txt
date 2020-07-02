@@ -53,3 +53,16 @@ for 1 timestep
 regular
 update object -> O(1)
 detect collision -> O(n)
+
+
+
+pixel graph
+substates are the different levels of the view(z-axis)
+
+object graph
+    4 directions to link them together
+    parent
+        pixel state at context
+pixel state at context
+    children
+        object graph state
