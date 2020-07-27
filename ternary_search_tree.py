@@ -15,7 +15,7 @@ class Vector():
         return self.container[-1]
     def __getitem__(self, key):
         return self.container[key]
-    def __setitem_(self, key, value):
+    def __setitem__(self, key, value):
         self.container[key] = value
     def append(self, value):
         self.container.append(value)

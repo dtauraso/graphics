@@ -66,3 +66,15 @@ object graph
 pixel state at context
     children
         object graph state
+
+
+pixel state "x y z monitor"
+
+object pixels state
+    state for x
+    state for y
+    state for z
+
+update the pixels state children
+use their contents to search for the official pixel state that stores the colors for that voxel
+the voxels on the surface of the monitor will be displayed
