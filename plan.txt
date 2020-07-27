@@ -68,7 +68,10 @@ pixel state at context
         object graph state
 
 
-pixel state "x y z monitor"
+pixel state "int(x) int(y) int(z)" treat each value in the name as a full value than a digit
+trie tree where each value is a coordinate instead of a digit
+sort using the nodes that come after the edges
+sort in-place
 
 object pixels state
     state for x
@@ -76,5 +79,9 @@ object pixels state
     state for z
 
 update the pixels state children
-use their contents to search for the official pixel state that stores the colors for that voxel
+use their contents(x, y, z as parts of a name) to search for the official pixel state that stores the colors for that voxel
 the voxels on the surface of the monitor will be displayed
+showing depth
+hold the main color constant
+decrease the other 2 colors to make it darker and farther away
+increase the other 2 colors to make it lighter and closer
