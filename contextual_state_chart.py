@@ -29,707 +29,307 @@ use flags to keep track of things
 make special functions to assume different properties of the states and print out error messages when they fail
 '''
 
-#  state chart selling point is I made the is from the ground up
 
-#  if they ask about xstate say I wanted to make something similar to prove I could do it
+def getVariable(graph, parentStateName, variableName):
 
-#  can I work with them?
-#  can they do the job?
-isDebug = True
+    # The parent state should only be linked to one variable name at a time
+    # in the below example:
+    # You can say 'quantity 2' then call it 'quantity' when using it in the reducers
+    # as long as the same parent doesn't also have a variable name called 'quantity 3'.
+    # This is to allow the user to use variable names with this contextual state chart
+    # at a simular level of detail they would use in a programming lnagugae
 
-def appendStates(temporaryState, states):
+    cell = graph['nodeGraph2'][parentStateName]  #getCell(graph, parentStateName)
 
-    # append the states
-    # return temporaryState
-    return {
-        ...temporaryState,
-        ...states
-    }
-}
+    if not cell:
+        return None
 
+    if not cell['variableNames']:
+        return None
 
+    variable = None
 
-export const setVariable = (state, parentStateName, variableName, newValue) => {
+    variableNameIsInCellVariableNamesCount = 0
+    found = False
 
-    // parentStateName is an array of strings
-    let variable = getVariable(state, parentStateName, variableName)
-    // console.log({variable, newValue})
-    return {
-        ...state,
-        
-        [variable.name]: {
-            ...variable,
-            value: newValue
-        }
-    }
-}
+    for cellVariableName in cell['variableNames']:
 
-export const setCell = (value) => {
-    return value
-}
+        # cell.variableNames.forEach(cellVariableName => {
 
-export const getCell = (table, name) => {
+		# this doesn't work if 1 vaiable name is a substring of the one we are loking for
+        if cellVariableName == variableName:
+            # return null
+            found = True
+            # console.log(cellVariableName, Object.keys(graph['nodeGraph2']))
+            variable = graph['nodeGraph2'][cellVariableName]
+            break
 
-
-    if(Object.keys(table).includes(name)) {
-        return table[name]
-    }
-    return {'error': 'no state'}
-}
-
-
-export const getVariable = (state, parentStateName, variableName) => {
-
-    // The parent state should only be linked to one variable name at a time
-    // in the below example:
-    // You can say 'quantity 2' then call it 'quantity' when using it in the reducers
-    // as long as the same parent doesn't also have a variable name called 'quantity 3'.
-    // This is to allow the user to use variable names with this contextual state chart
-    // at a simular level of detail they would use in a programming lnagugae
-
-    let cell = getCell(state, parentStateName)
-
-    if(!cell) {
-        return null
-    }
-    if(!Object.keys(cell).includes('variableNames')) {
-        return null
-    }
-    let variable = null
-
-    let variableNameIsInCellVariableNamesCount = 0
-    let found = false
-
-    cell.variableNames.forEach(cellVariableName => {
-        if(cellVariableName.search(variableName) === -1) {
-            return null
-        }
 
         variableNameIsInCellVariableNamesCount += 1
-        found = true
-        variable = state[cellVariableName]
-    })
+		# console.log({variable})
+        # })
 
-    if(variableNameIsInCellVariableNamesCount > 1) {
-        console.log(`You cannot have more than 1 variable name that contains |${variableName}|`)
-        return null
-    }
-    if(!found) {
-        console.log(`A variable similarly called ${variableName} may exist but there is no link from |${parentStateName}| to |${variableName}|`)
-        return null
+    if variableNameIsInCellVariableNamesCount > 1:
+        print(f'You cannot have more than 1 variable name that contains |{variableName}|')
+        return None
 
-    }
-    if(variable === null) {
-        console.log(variableName, 'doesn\'t exist')
-        return null
-    }
+    if not found:
+        print(f'A variable similarly called {variableName} may exist but there is no link from |{parentStateName}| to |{variableName}|')
+        return None
+
+
+    if variable == None:
+        print(variableName, 'doesn\'t exist')
+        return None
+
+	# print({variable})
 
     return variable
-}
 
-export const getChild = (state, cell, childName) => {
+def setVariable(graph, parentStateName, variableName, newValue):
 
-    if(!cell) {
-        return null
-    }
-    if(!Object.keys(cell).includes('children')) {
-        return null
-    }
-    let child = null
+	# print({parentStateName, variableName, newValue})
+    # parentStateName is an array of strings
+    variable = getVariable(graph, parentStateName, variableName)
+	# print({variable, newValue})
+    graph['nodeGraph2'][variable['name']]['value'] = newValue
 
-    if(cell.children.includes(childName)) {
-        child = getCell(state, childName)
-    }
-    
-    return child
-}
+class ListNode ():
+    def __init__(self, currentParent, ithParent, grandParent):
 
-export const getChildren = (state, stateName) => {
+	self.currentParent = currentParent
+	self.ithParent = ithParent
+	self.grandParent = grandParent
 
-    let cell = getCell(state, stateName)
+def getIndents(count):
 
-    if(!cell) {
-        return []
-    }
-    if(!Object.keys(cell).includes('children')) {
-        return []
-    }
-    return cell.children
-}
+	indent = ''
 
-export const tableAssign = (state, cell, value) => {
+	while count > 0:
+		indent += '    '
+		count -= 1
+
+	return indent
 
 
-    if(cell === null) {
-        return state
-    }
-    let cellName = cell.name
-    return {
-        ...state,
-        [cellName]: {
-            ...state[cellName],
-            value: value
-        }
-    }    
-}
 
-const initCurrentState = (  temporaryState,
-                            currentState,
-                            iterationCount,
-                            newValue) => {
-    return {
-        ...temporaryState,
-        'currentStateVariableChanges': {
-            'currentStateName': currentState,
-            'iterationCount': iterationCount,
-            'firstBefore': {
-                'parents' : newValue
-            },
-            'lastAfter': {
-                'parents' : {
-                    
-                }
-            }
-        }
-    }
-}
+def printLevelsBounds(ithState, graph, stateName, indents):
+	ourString = graph['input']
+	if type(ourString) == 'object':
+		ourString = ourString.join(' ')
 
-const updateParents = ( temporaryState,
-                        timeLabel,
-                        parentStateName,
-                        newValue) => {
+	print(f'Round #: {ithState} {getIndents(indents)} | state name = \'{stateName}\' | level = {indents} | function =  {graph.nodeGraph2[stateName].function.name} | a = {graph.operationVars.a} | expression = {ourString}\n')
 
-    return {
-        ...temporaryState,
-        'currentStateVariableChanges': {
-            ...temporaryState['currentStateVariableChanges'],
-            [timeLabel] : {
-                ...temporaryState['currentStateVariableChanges'][timeLabel],
-                'parents' : {
-                    ...temporaryState['currentStateVariableChanges'][timeLabel]['parents'],
-                    [parentStateName]: newValue
-                }
-            }
-        }
-    }
-}
+def printVarStore(graph):
 
-const  resetCurrentState = (    temporaryState,
-                                currentState,
-                                timeLabel,
-                                iterationCount,
-                                newValue) => {
+	m = graph['input']
+	return '|' + graph['input'][m] + '|'
 
-    return {
-        ...temporaryState,
-        'currentStateVariableChanges': {
-            'currentStateName': currentState,
-            'iterationCount': iterationCount,
-            [timeLabel]: {
-                'parents' : newValue
-            }
-        }
-    }
-    
-}
 
-// 'currentStateVariableChanges' is an illegal state name as it's needed to track variable changes
-export const set = (state, action, parentStateName, targetVar, dependencyVars, cb) => {
+def visitNode(graph, nextState, stateMetrics, parentStateHead):
+	
+    # used to say undefined not None
+	if nextState == None:
+		print("the js syntax for the next states is wrong")
+		return stateMetrics
 
-    // save the data and track changes made to the vars as each set call is run from a reducer function
-    // console.log({parentStateName, targetVar})
-    // store by 'current state'
-    /*
-        state['current_state']: {
-            current_state: action.type,
-            ithRun: state[action.type].ithRun,
-            firstBefore: {},
-            lastAfter: {}
-        }
-    */
-    // redesign this
-    // before we change the variable
-    let currentStateName = action.type
-    let iterationCount = state[action.type].iterationCount
-    let temporaryState = state
+	# last round was a pass
+	if stateMetrics['passes']:
+		return stateMetrics
 
-    if(temporaryState['currentStateVariableChanges'] === undefined) {
-        // we are at the first call to set in entire machine
-        let variable = getVariable(state, parentStateName, targetVar)
+	state = graph['nodeGraph2'][nextState]
+	if not state.function:
+		print(state, "doesn't have a function")
+		return stateMetrics
 
-        temporaryState = initCurrentState(  temporaryState,
-                                            action.type,
-                                            temporaryState[action.type].iterationCount,
-                                            {[targetVar]: variable.value})
+	parentState = ''
+	if parentStateHead:
+		parentState = parentStateHead.currentParent
 
-    }
-    else {
-        let currentProgressReport = temporaryState['currentStateVariableChanges']
-        // console.log(currentProgressReport)
-        // let searchKeys = Object.keys(currentProgressReport)
-        if( currentProgressReport.currentStateName === currentStateName &&
-            currentProgressReport.iterationCount === iterationCount) {
-            // we are at the second or nth set call 
-            // update old stuff
-            let variable = getVariable(state, parentStateName, targetVar)
-            // console.log(targetVar, temporaryState[targetVar])
+	else:
+		parentState = None
 
-           const timeLabel = 'firstBefore'
-           temporaryState = updateParents(  temporaryState,
-                                            timeLabel,
-                                            parentStateName,
-                                            {...(temporaryState['currentStateVariableChanges'][timeLabel]['parents'][parentStateName] !== undefined?
-                                                    temporaryState['currentStateVariableChanges'][timeLabel]['parents'][parentStateName]:
-                                                    {}),
-                                                [targetVar]: variable.value
-                                            })
+	# update to use a parent state
+	# (current_state, graph, parent_state)
+	success = state['function'](graph, parentState, nextState)
+	if not success:
+		return stateMetrics
 
-        }
-        else {
-            // we are at the first set call for our current state and iteration count
-            // reset old data and start with new stuff
-            let variable = getVariable(state, parentStateName, targetVar)
-            // console.log(targetVar, temporaryState[targetVar])
+	stateMetrics['passes'] = true
+	stateMetrics['winningStateName'] = nextState
+	return stateMetrics
 
-           temporaryState = resetCurrentState( temporaryState,
-                                                action.type,
-                                                'firstBefore',
-                                                temporaryState[action.type].iterationCount,
-                                                {[parentStateName]: { [targetVar]: variable.value}})
-        }
-    
-    }
-   
-    // store the first before and overwrite the afters
-    // 
-    // we can't assume parentStateName is always the parent of the current state
-    // if the parent is not a parent of current state how do we know when the last call to set is being made?
+def goDown1Level(graph, machineMetrics, stateMetrics):
 
-    // targetVar is a variable name
-    if(typeof dependencyVars !== 'object') {
+	currentState = stateMetrics['winningStateName']
+	currentStateObject = graph['nodeGraph2'][currentState]
+				
+	machineMetrics['parent'] = ListNode(currentStateObject.name, 0, machineMetrics['parent'])
+	machineMetrics['indents'] += 1
+	machineMetrics['nextStates'] = graph['nodeGraph2'][currentState]['children']
+	return machineMetrics
 
-        temporaryState = tableAssign(
-                                    temporaryState,
-                                    getVariable(temporaryState, parentStateName, targetVar),
-                                    dependencyVars)
+def moveUpParentAndDockIndents(graph, machineMetrics):
 
-    }
-    else {
-        temporaryState = tableAssign(
-                                    temporaryState,
-                                    getVariable(temporaryState, parentStateName, targetVar),
-                                    // apply cb to list of variables
-                                    cb(...dependencyVars.map(variableName => getVariable(   temporaryState,
-                                                                                            parentStateName,
-                                                                                            variableName).value)))
-    }
+	parent = machineMetrics['parent']
+	# print('traveling up parent', machine_metrics)
+	while parent:
+		machineMetrics['indents'] -= 1
 
-    let currentProgressReport = temporaryState['currentStateVariableChanges']
+		#  console.log({parent})//, state: graph['node_graph2'][parent.current_parent]})
+        # used to compare to undefined (next one != undefined)
+		if graph['nodeGraph2'][parent.currentParent]['next']:
+			if graph['nodeGraph2'][parent.currentParent]['next'].length > 0:
 
-    if( currentProgressReport.currentStateName === currentStateName &&
-        currentProgressReport.iterationCount === iterationCount) {
-        // we are at the second or nth set call 
-        // update old stuff
-        let variable = getVariable(state, parentStateName, targetVar)
 
+				machineMetrics['nextStates'] = graph['nodeGraph2'][parent.currentParent]['next']
+				machineMetrics['parent'] = parent.grandParent
+	
+				return machineMetrics
+
+		
+		else:
+			#  we are at a parent end state
+			temp = parent
+			parent = parent.grandParent
+			del temp
+
+	#  guaranteed to have traversed up all end states at end of machine
+	machineMetrics['parent'] = None
+	machineMetrics['nextStates'] = []
+	return machineMetrics
+
+def backtrack(graph, machineMetrics):
+
+	#  go through the parent linked list and look for any remaining unrun children to resume the visitor function on
+	print(f'{getIndents(machineMetrics.indents)} failed states L > 2 {machineMetrics.nextStates}')
+
+	count = 0
+	#  the second to the nth round of the loop is case 2
+	while machineMetrics['parent']:
+
+		machineMetrics['parent'].ithParent += 1
+
+		ithParent = machineMetrics['parent'].ithParent
+		currentParent = machineMetrics['parent'].currentParent
+
+		children = graph['nodeGraph2'][currentParent]['children']
+
+		# secondary loop exit
+		# case 1
+		# we are done if there is at least 1 unrun child
+		if ithParent < children.length:
+
+			machineMetrics['nextStates'] = children[ithParent: children.length]
+
+			return machineMetrics
+
+        else:
+			# the first round of children will be failed children
+
+            message = 'failed' if count == 0 else 'passed'
+            childrenString = ', '.join(children)
+            print(f'{getIndents(machineMetrics.indents)} {message} children ${childrenString}')
         
-       const timeLabel = 'lastAfter'
-       temporaryState = updateParents(  temporaryState,
-                                        timeLabel,
-                                        parentStateName,
-                                        {...(temporaryState['currentStateVariableChanges'][timeLabel]['parents'][parentStateName] !== undefined?
-                                            temporaryState['currentStateVariableChanges'][timeLabel]['parents'][parentStateName]:
-                                            {}),
-                                            // targetVar is a variable name
-                                            [targetVar]: typeof dependencyVars !== 'object'?
-                                                        dependencyVars:
-                                                    cb(...dependencyVars.map(variableName => getVariable(state, parentStateName, variableName).value))
-                                        })
+        temp = machineMetrics['parent']
+        # case 2.1 can turn into case 2.2 if loop condition breaks
+        machineMetrics['parent'] = machineMetrics['parent'].grandParent
+        del temp
+        machineMetrics['indents'] -= 1
+        count += 1
 
-    }
-    else {
-        // we are at the first set call for our current state and iteration count
-        // reset old data and start with new stuff
-        let variable = getVariable(state, parentStateName, targetVar)
-        // console.log(targetVar, temporaryState[targetVar])
+	# case 2.2
+	if machineMetrics['parent'] == None:
+		# the current state on the highest parent level failed so we cannot continue
+		machineMetrics['nextStates'] = []
+
+	return machineMetrics
+
+def visitRedux(graph, startState, indents):
+
+    # does depth first tranversal for each subgraph(each subgraph is a state name that has children)
+    # does breath first traversal for within each subgraph
+
+    '''
+    3 planes
+    plane 1) the parent linked list
+    plane 2) a machine defined by the parent state and it's child states 
+    plane 3) the layers of machines(plain 2) linked to by the parent states in the linked list
+        the layers may changed based on what the parent is at the ith level(you can have a machine where more than
+            1 child state is also a parent will eventually be in the parent linked list)
+    '''
+    # parent3 -> parent2 -> parent1 -> null
+    # when we have a state that is a parent
+        # add it to the head of the list
+    # when machine is over
+        # delete nodes from head till we find one with next states length > 0
+    # assumes state_name actually runs
+    i = 0
+    #  start from the state state
 
 
-       temporaryState = resetCurrentState(  temporaryState,
-                                            action.type,
-                                            'lastAfter',
-                                            temporaryState[action.type].iterationCount,
-                                            {[parentStateName]: { [targetVar]: variable.value}})
+    machineMetrics = {
+		'nextStates': [startState],
+		'parent': None,
+		'indents': indents
+	}
 
-    }
-    return temporaryState
+    while machineMetrics['nextStates'].length > 0:
+    	# print(i)
+        if i == 75:
 
-    // save the data inside the table
-    // test if we are in the current state or not
-    // update stuff
-    // return the table
-}
+            print('we are out of states')
+            exit()
 
-
-export const setArray = (state, parentStateName, targetVar, array) => {
-
-    // array is an object
-    return tableAssign(
-        state,
-        getVariable(state, parentStateName, targetVar),
-        array
-    )
-}
-
-const hasSubstates = (cell) => {
-    if(!Object.keys(cell).includes('substates')) {
-        return false
-    }
-    else if(Object.keys(cell.substates).length === 0) {
-        return false
-    }
-    else {
-        return true
-    }
-}
-
-const hasAttributeOfCollection = (cell, attributeName) => {
-    if(!Object.keys(cell).includes(attributeName)) {
-        return false
-    }
-    else if(cell[attributeName].length === 0) {
-        return false
-    }
-    else {
-        return true
-    }
-
-}
-const hasAttribute = (cell, attributeName) => {
-    if(!Object.keys(cell).includes(attributeName)) {
-        return false
-    }
-    else {
-        return true
-    }
-}
-export const treeVisualizer = (table, currentState) => {
-
-    // treat each cell as if only 1 function call maps to 1 cell
-    /*
-    cell(full name here)
-    children
-    variables
-    substates: [
-        {
-        cell(full name here)
-        children
-        variables
-        substates: []
+        print(getIndents(indents), 'next_states', next_states)
+        stateMetrics = {
+            passes: false,
+            winningStateName: ''
         }
-    ]
-    */
-//    console.log('current state name', currentState)
-    // if any child state has more than 1 parent this will return misleading information
-    let cell = getCell(table, currentState)
-    if(!cell) {
-        return {}
-    }
-    // if(hasAttribute(cell, 'value')) {
-    //     return {value: cell.value}
-    // }
-    // this is why a child state with a value gets messed up
-    else if(hasAttribute(cell, 'value')) {
-        return {name: cell.name, value: cell.value}
-    }
+        # machine will stop running if all have failed(there must be more than 0 states for this to be possible) or error state runs
+        # loop ends after the first state passes
 
-    let variables = {}
-    if(hasAttributeOfCollection(cell, 'variableNames')) {
+        for nextState in machineMetrics['nextStates']:
 
-        cell.variableNames.forEach(variableStateName => {
-            variables = {
-                ...variables,
+            stateMetrics = visitNode(	graph,
+                                        nextState,
+                                        stateMetrics,
+                                        machineMetrics['parent'])
 
-                // should return a tree of states
-                [variableStateName]: {...treeVisualizer(table,
-                                                variableStateName)}
-            }
-        })
-    }
+		# Object.keys(user).forEach(userAttribute => {
+		 	# console.log(userAttribute)
+		 	# console.log(user[userAttribute])
+		#  })
+		#  console.log({machine_metrics, state_metrics, graph})
+		#  current state passes
+        if stateMetrics['passes']:
+			#  console.log({mm: machineMetrics})
+			printLevelsBounds(i, graph, stateMetrics['winningStateName'], machineMetrics['indents'])
 
-    let children = []
-    if(hasAttributeOfCollection(cell, 'children')) {
+			currentStateName = stateMetrics['winningStateName']
+			currentState = graph['nodeGraph2'][currentStateName]
+			#  console.log()
+			#  current state is a parent
+			if currentState['children']:
+				#  console.log("here")
+				machineMetrics = exports.goDown1Level(graph, machineMetrics, stateMetrics)
+				#  console.log({mm: machine_metrics})
 
-        cell.children.forEach(childStateName => {
+			# current state is not a parent but has next states
+			elif currentState['next']:
+				machineMetrics['nextStates'] = graph['nodeGraph2'][currentStateName]['next']
 
-            // should return a tree of states
-            children = [...children,
-                        treeVisualizer(table,
-                                childStateName)]
-        })
-    }
+			# current state is not a parent and has no next states (end state)
+			else:
+				# console.log('done with machine')
+				# console.log({machine_metrics})
+				machineMetrics = exports.moveUpParentAndDockIndents(graph, machineMetrics)
 
-    let substates = []
-    if(hasSubstates(cell)) {
+        else:
 
-        // visit subtrees here
-        // console.log('current state', currentState, 'substates', cell.substates)
-        cell.substates.forEach(substate => {
-            // console.log('substate name', currentState + ' ' + substate)
-            // get the next nested granular state within currentState
-            substates = [
-                ...substates,
-                treeVisualizer(table,
-                        currentState + ' ' + substate)
-                ]
-        })
-    }
-    
-    return {
-            // 'a', 'b', and 'c' parts are so this is the order they show up in the console
-            a_name: cell.name,
-            ...(cell.functionCode === undefined? {} : {b_function: cell.functionCode.name}),
-            ...(cell.iterationCount === undefined? {} : {c_iterationCount: cell.iterationCount}),
-            ...(cell.nextStates === undefined? {} : {d_nextStates: cell.nextStates}),
-            e_children: children,
-            f_variables: variables,
-            substates: substates  
-    }
-}
-export const printTreeInteractive = (state) => {
-    let elementarySchoolName = 'elementarySchool'
-    let x = treeVisualizer(state, elementarySchoolName)
-    console.log('tree', x)
+			#  console.log('submachine fails')
+			#  submachine fails
+			#  if this was recursive this case would return to the children check case above
+			machineMetrics = exports.backtrack(graph, machineMetrics)
 
-}
-
-export const breathFirstTraversal = (state, action, startStateName, levelId, stateChartHistory) => {
-    // startStateName is a string
-
-    // we can use the payload from the user for the entire traversal
-    // traverse from start state to end state
-
-    // dft for each level with bft for each node in the level
-    // try all the options
-    // for each one
-        // return the state then the stateSuceded flag
-        // if it passes try it's children
-
-    // return the state once endState is reached
-    // assume each occurrence of this function on the callstack represents the outcome of the state machine
-    // [state, pass/fail status]
-
-    // This function will create a stack overflow if the state chart tree has an infinite loop from any cycles
-
-    
-    // this will cumulatively hold the state copies untill we are done with the machine
-    let temporaryState = state
-    // console.log("level", levelId)
-    let nextStates = startStateName
-    let currentStateName = startStateName
-
-    while(true) {
-        // record each state as it passes
-        //  [{treeBefore: temporaryState, stateName, functionName, treeAfter: temporaryStateAfter, submachine: [path of states]}]
-        // pass the tree down the call stack to save each state after it's run
-        // return the tree up the call stack to replace the old version above it
-        // console.log(nextStates)
-        let passes = false
-        let winningStateName = ''
-        let stateFunctionPair = []
-        nextStates.forEach(nextState => {
-
-            /* {
-                didFunctionFail,   // Did we hit any (return null)'s ?
-                passes,
-                winningStateName,
-                temporaryState,
-                stateFunctionPair,
-                stateChartHistory} = visitNode( temporaryState, 
-                                                nextState,
-                                                action,
-                                                stateFunctionPair,
-                                                stateChartHistory,
-                                                isDebug,
-                                                levelId)
-            */
-            // console.log('trying', nextState)
-            if(nextState === undefined) {
-                console.log("the js syntax for the next states is wrong")
-                return null
-
-            }
-
-            if(passes) {
-                return null
-            }
-            // console.log("getting state", temporaryState, nextState, stateChartHistory) 
-            let cell = getCell(temporaryState, nextState)
-            // console.log('cell found', cell.name)
-            // ignore the state if it doesn't have a function to run
-            if(!Object.keys(cell).includes('functionCode')) {
-                console.log(cell, "doesn't have a function")
-                return null
-            }
-            // make sure the set call knows what state we are on even if it's a loop with a single state
-            if(!Object.keys(cell).includes('iterationCount')) {
-                // put in iterationCount
-                temporaryState = {
-                    ...temporaryState,
-                    [cell.name] : {
-                        ...temporaryState[cell.name],
-                        iterationCount: 0
-                    }
-                }
-            }
-            
-            // action.type is the parent state untill this line is run(in the first level the parent == current state)
-            // console.log('parent state', action.meta.parentStateName)
-            action.type = nextState
-            // console.log('got here')
-            // action's current state is .type
-            // action.meta.currentState = nextState // bad idea
-            // console.log("function to run", getValue(temporaryState, nextState), action)
-            // save tree here
-            const result = cell['functionCode'](temporaryState, action)
-            const success = result[1]
-            // console.log("finished function")
-            // console.log(temporaryState, success)
-            if(!success) {
-                stateFunctionPair = [...stateFunctionPair, {state: cell.name, functionCode: cell['functionCode'].name}]
-                return null
-            }
-
-            // must keep the success value as we go up and down the call stack
-            temporaryState = result[0]
-
-            let before = null
-            let after = null
-            // console.log({ourDiff: temporaryState['currentState']})
-            if(temporaryState['currentStateVariableChanges'] !== undefined) {
-                if(temporaryState['currentStateVariableChanges']['firstBefore'] !== undefined) {
-                    before = {...temporaryState['currentStateVariableChanges']['firstBefore']}
-            
-                }
-                if(temporaryState['currentStateVariableChanges']['lastAfter'] !== undefined) {
-                    after = {...temporaryState['currentStateVariableChanges']['lastAfter']}
-                }
-            }
-            // reset currentState here as we now know all the set functions have been run
-            //  blankOutCurrentState(result[0]) => deletes it
-            // save the state and function name here
-            // get the before and after data from the 'currentState' entry in state
-            stateChartHistory = {   ...stateChartHistory,
-                                    [Object.keys(stateChartHistory).length] : {
-                                                                a_before: before,
-                                                                stateName: nextState,
-                                                                functionName: cell['functionCode'].name,
-                                                                z_after: after
-                                                            }
-                                                                // a_before
-                                                                // z_after
-                                                                // so order in the console will be
-                                                                // a_before, stateName, functionName, z_after
-                                }
-            // erase currentStateVariableChanges so set will init a new one the first time it runs in a function
-            delete temporaryState['currentStateVariableChanges']
-
-            temporaryState = {
-                ...temporaryState,
-                [cell.name] : {
-                    ...temporaryState[cell.name],
-                    iterationCount: temporaryState[cell.name].iterationCount += 1
-                }
-            }
-            if(isDebug) {
-                console.log({stateChartHistory})
-            }
-
-
-            passes = true
-            winningStateName = nextState
-            // action.type = winningStateName
-            // console.log('passes', action.type)
-            // console.log()
-            // untested
-            // if the winningStateName has any children
-            let childrenStates = getChildren(temporaryState, winningStateName)
-            // console.log('children states', childrenStates)
-            if(childrenStates === null) {
-                return null
-            }
-            if(childrenStates.length === 0) {
-                return null
-            }
-            // console.log("we have children", childrenStates)
-            // as we go down the machine the current winning state now becomes the parent
-            action.meta.parentStateName = action.type
-            // call the routing agin with next states holding the children
-            // pass the current list here
-            const nestedResult = breathFirstTraversal(  temporaryState,
-                                                        action,
-                                                        childrenStates,
-                                                        levelId + 1,
-                                                        stateChartHistory)
-            // update the state hierarchy history here using nestedResult[2]
-            let keys = Object.keys(stateChartHistory)
-            let lastKey = keys[keys.length - 1]
-            stateChartHistory = {   ...stateChartHistory,
-                                    [lastKey] : {
-                                       ...stateChartHistory[lastKey],
-                                        submachine: nestedResult[2]}}
-
-            passes = nestedResult[1]
-            if(!passes) {
-                return null
-            }
-
-            temporaryState = nestedResult[0]
-
-        })
-        // 3 parameter return as opposed to [stateChart, didPass] the reducers return
-        // current state is an end state
-        if(nextStates.length === 0) {
-            // return whatever value we have in passes and the stateChartHistory build up so far from top to bottom back to top
-            return [temporaryState, passes, stateChartHistory]
-        }
-        // current state is not an end state
-
-        else if(passes) {
-            // console.log("we have a winner", winningStateName, winningFunctionName)
-
-            currentStateName = winningStateName
-            
-            const currentStateObject = getCell(temporaryState, currentStateName)
-            // putting this in would force all states to have it as an attribute even if they have no edges
-            if(!Object.keys(currentStateObject).includes('nextStates')) {
-                // console.log('The next states doesn\'t exist')
-                // printTreeInteractive(temporaryState)
-
-                return [temporaryState, true, stateChartHistory]
-            }
-            if(currentStateObject.nextStates.length === 0) {
-                // console.log(`machine is done 1 ${levelId}`)
-                // keepGoing = false
-                return [temporaryState, true, stateChartHistory]
-            }
-            nextStates = currentStateObject.nextStates
-
-            // console.log("next set of edges", nextStates)
-        }
-        else {
-            // What is the difference between a purposefull failure and unpurposefull failure?
-            let keys = Object.keys(stateChartHistory)
-            let lastKey = keys[keys.length - 1]
-            stateChartHistory = {   ...stateChartHistory,
-                                    [lastKey] : {
-                                       ...stateChartHistory[lastKey],
-                                        nextStates: stateFunctionPair}}
-            if(isDebug) {
-                console.log('failed', {stateChartHistory})
-
-            }
-
-            return [temporaryState, false, stateChartHistory]
-        }
-    }
-}
+        i += 1
